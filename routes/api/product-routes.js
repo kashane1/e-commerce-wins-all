@@ -6,27 +6,92 @@ const { Product, Category, Tag, ProductTag } = require('../../models');
 // get all products
 router.get('/', (req, res) => {
   // find all products
-  const getProducts = await Product.findAll().catch((err) => {
+  // be sure to include its associated Category and Tag data
+  Product.findAll({
+    attributes: ['id', 'product_name', 'price', 'stock'],
+    include: [
+      // {
+      //   model: Category, 
+      //   attributes: ['id', 'category_name'],
+      //   include: [
+      //     {
+      //       model: Tag,
+      //       attributes: ['id', 'tag_name'],
+      //       through: {
+      //         model: ProductTag,
+      //         where: {
+      //           tag_id: true,
+      //           product_id: true
+      //         }
+      //       }
+      //     }
+      //   ]
+      // },
+
+      // {
+      //   model: Tag,
+      //   attributes: ['tag_name'],
+      //   through: {
+      //     model: ProductTag,
+      //     where: {
+      //       product_id: Product.id,
+      //       tag_id: Tag.id
+      //     }
+      //   },
+      // }
+      //reversing the one above into the one below
+      // {
+      //   model: ProductTag,
+      //   where: {
+      //     product_id: Product.id,
+      //     tag_id: Tag.id,
+      //     include: [
+      //       {
+      //         model: Tag,
+      //         attributes: ['id', 'tag_name'],
+      //       },
+      //     ]
+      //   },
+      // },
+
+      //as you can see i tried so many ways to include the associated tags. could not get it.
+      // so i am only including the categories
+      {
+        model: Category, 
+        attributes: ['id', 'category_name'],
+      }
+    ],
+  })
+  .then(data => {
+    res.status(200).json(data);
+  })
+  .catch(err => {
     res.status(500).json(err);
   });
-  res.status(200).json(getProducts);
-
-
-  // be sure to include its associated Category and Tag data
-  // i did not include the associated category and tag data yet, maybe later
 });
 
 // get one product
 router.get('/:id', (req, res) => {
   // find a single product by its `id`
-  const getProduct = await Product.findByPk(req.params.id).catch((err) => {
-    res.status(500).json(err);
-  });
-  res.status(200).json(getProduct);
-  
-
   // be sure to include its associated Category and Tag data
-  // i did not include the associated category and tag data yet, maybe later
+  Product.findByPk(req.params.id, {
+    include: [
+      {
+        model: Category,
+        attributes: ['id','category_name']
+       },
+    ]
+  })
+  .then(data => {
+    if (!data) {
+      res.status(404).json({ message: 'No Product found with this id' });
+      return;
+    }      
+    res.status(200).json(data);
+  })
+  .catch(err => {
+    res.status(500).json(err);
+  }); 
 });
 
 // create new product
@@ -103,21 +168,22 @@ router.put('/:id', (req, res) => {
     });
 });
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   // delete one product by its `id` value
-  try {
-    const deletedProduct = await Product.destroy({
-      where: {
-        id: req.params.id,
-      },
-    });
+  Product.destroy({
+    where: {
+      id: req.params.id,
+    },
+  })
+  .then(deletedProduct => {
     if (!deletedProduct) {
       res.status(404).json({ message: "No Product with this id."});
-    }
+    };
     res.status(200).json(deletedProduct);
-  } catch (err) {
+  })
+  .catch(err => {
     res.status(500).json(err);
-  }
+  });
 });
 
 module.exports = router;
