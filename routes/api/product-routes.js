@@ -3,59 +3,27 @@ const { Product, Category, Tag, ProductTag } = require('../../models');
 
 // The `/api/products` endpoint
 
-// get all products
+// get all products //collapsing for now and creating another
 router.get('/', (req, res) => {
   // find all products
   // be sure to include its associated Category and Tag data
   Product.findAll({
-    attributes: ['id', 'product_name', 'price', 'stock'],
+    attributes: ['id', 'product_name', 'price', 'stock', 'category_id'],
     include: [
+      // for some reason this was giving me a "SequelizeEagerLoadingError"
       // {
-      //   model: Category, 
-      //   attributes: ['id', 'category_name'],
-      //   include: [
-      //     {
-      //       model: Tag,
-      //       attributes: ['id', 'tag_name'],
-      //       through: {
-      //         model: ProductTag,
-      //         where: {
-      //           tag_id: true,
-      //           product_id: true
-      //         }
-      //       }
-      //     }
-      //   ]
+      //   model: Category,
+      //   attributes: ['id', 'category_name']
       // },
-
       // {
       //   model: Tag,
+      //   through: ProductTag,
       //   attributes: ['tag_name'],
-      //   through: {
-      //     model: ProductTag,
-      //     where: {
-      //       product_id: Product.id,
-      //       tag_id: Tag.id
-      //     }
-      //   },
-      // }
-      //reversing the one above into the one below
-      // {
-      //   model: ProductTag,
-      //   where: {
-      //     product_id: Product.id,
-      //     tag_id: Tag.id,
-      //     include: [
-      //       {
-      //         model: Tag,
-      //         attributes: ['id', 'tag_name'],
-      //       },
-      //     ]
-      //   },
+      //   as: 'tags'
       // },
 
-      //as you can see i tried so many ways to include the associated tags. could not get it.
-      // so i am only including the categories
+
+      // so i am only including the categories:
       {
         model: Category, 
         attributes: ['id', 'category_name'],
@@ -70,10 +38,12 @@ router.get('/', (req, res) => {
   });
 });
 
+
 // get one product
 router.get('/:id', (req, res) => {
   // find a single product by its `id`
   // be sure to include its associated Category and Tag data
+  // i was getting the same error, "SequelizeEagerLoadingError", so only including category
   Product.findByPk(req.params.id, {
     include: [
       {
@@ -98,10 +68,10 @@ router.get('/:id', (req, res) => {
 router.post('/', (req, res) => {
   /* req.body should look like this...
     {
-      product_name: "Basketball",
-      price: 200.00,
-      stock: 3,
-      tagIds: [1, 2, 3, 4]
+      "product_name": "Basketball",
+      "price": 200.00,
+      "stock": 3,
+      "tagIds": [1, 2, 3, 4]
     }
   */
   Product.create(req.body)
@@ -139,7 +109,7 @@ router.put('/:id', (req, res) => {
       return ProductTag.findAll({ where: { product_id: req.params.id } });
     })
     .then((productTags) => {
-      // get list of current tag_ids
+      // get list of all current tag_ids
       const productTagIds = productTags.map(({ tag_id }) => tag_id);
       // create filtered list of new tag_ids
       const newProductTags = req.body.tagIds
