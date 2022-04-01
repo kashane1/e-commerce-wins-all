@@ -6,20 +6,15 @@ const { Tag, Product, ProductTag } = require('../../models');
 router.get('/',  (req, res) => {
   // find all tags
   // be sure to include its associated Product data
-
   Tag.findAll({
-    // really strugglign with this, tag doesnt have any references, so i know i have to go through ProductTag
-    // cant seem to get the through: ProductTag, line to work
-    attributes: ["id", "tag_name"],
-    // include: [
-    //   {
-    //     model: Product,
-    //     attributes: ["id", "product_name", "price", "stock", "category_id"],
-    //     through: ProductTag,
-    //     as: "products",
-    //   },
-    // ],
-    // new idea, maybe try to tame some of the code from the create new product which was given to us
+    attributes: ['id', 'tag_name'],
+    include: [
+      {
+        model: Product,
+        attributes: ['id', 'product_name', 'price', 'stock', 'category_id'],
+        through: ProductTag,
+      },
+    ],
   })
   .then(data => {
     res.status(200).json(data);
@@ -35,14 +30,14 @@ router.get('/:id', (req, res) => {
 
   Tag.findByPk(req.params.id, {
     // will definitely need help trying to figure this out
-    // include: [
-    //   {
-    //     model: Product,
-    //     through: ProductTag,
-    //     attributes: ['id','product_name', 'price', 'stock']
-    //    },
-    // ]
-    attributes: ["id", "tag_name"],
+    attributes: ['id', 'tag_name'],
+    include: [
+      {
+        model: Product,
+        through: ProductTag,
+        attributes: ['id','product_name', 'price', 'stock', 'category_id']
+      },
+    ]
   })
   .then(data => {
     if (!data) {
